@@ -1,35 +1,78 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useEffect, useState } from 'react'
 import './App.css'
+import { getPlayers,getSinglePlayers, deletePlayer, createPlayer } from './api';
+import { Player } from "./components/Player";
+import { PlayerDetails } from "./components/PlayerDetails";
+import { PlayerForm } from "./components/PlayerForm";
+
+
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [players, setPlayers] = useState([]);
+  const [player, setPlayer] = useState({});
+  const [filter, setFilter] = useState("");
+
+
+  useEffect(() => {
+    getPlayers().then((players) => {
+      setPlayers(players);
+    });
+  }, []);
+
+  function  handlePlayerClick(playerId){
+    getSinglePlayers(playerId).then(setPlayer);
+  }
+
+  function handlePlayerDelete(){
+    deletePlayer(playerId).then(() => {
+      getPlayers().then((players) => {
+        setPlayers(players);
+      });
+    });
+  }
+
+  function handleSubmit(evt){
+    evt.preventDefault();
+    const formData = new FormData(evt.target);
+    const newPlayer = Object.fromEntries(formData.entries);
+    createPlayer(newPlayer).then(() => {
+      getPlayers().then(() => {
+        setPlayers(players);
+      });
+    });
+  }
+
+  function handleFilter(evt){
+    setFilter(evt.target.value);
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <h1>Puppy Bowl</h1>
+      <PlayerDetails player = {player}/>
+      <PlayerForm player={player} onSubmit={handleSubmit} />
+
+      <label htmlFor="filter">Search:</label>
+      <input type="text" name='filter' value={filter} onChange={handleFilter} />
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Breed</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+      
+        <tbody>
+          {players.filter((player) => player.name.toLowerCase().includes(filter.toLowerCase())).map((player) => {
+            return(
+              <Player key={player.id} player={player} onClick={handlePlayerClick} onDelete={handlePlayerDelete}/>
+            );
+          })}
+        </tbody>
+      </table> 
     </>
-  )
+  );
 }
 
 export default App
